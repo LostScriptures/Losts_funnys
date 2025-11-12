@@ -2,9 +2,6 @@ from random import randint
 
 class Dice:
     total: int = 0
-    __avg_total: float = 0.0
-    __highest: int = 0
-    __lowest: int = 0
 
     def __init__(self, num_rolls: int = 1, sides: int = 6, mod: int = 0, die_string: str | None = None):
         self.num_rolls = num_rolls
@@ -13,22 +10,10 @@ class Dice:
 
         if die_string is not None:
             self.parse_notation(die_string)
-        
-        else:
-            self._calc_avg_total()
-            self._calc_min_max()
     
     def _roll(self):
         return randint(1, self.sides)
-
-    def _calc_avg_total(self):
-        sum_sides = sum([x for x in range(1, self.sides + 1)])
-        self.__avg_total = (sum_sides / self.sides) * self.num_rolls + self.mod
-
-    def _calc_min_max(self):
-        self.__lowest = self.num_rolls + self.mod
-        self.__highest = self.sides * self.num_rolls + self.mod
-
+   
     def roll(self):
         """Does not count towards the dice total, but uses the dices settings"""
         return self._roll() + self.mod
@@ -38,8 +23,6 @@ class Dice:
         for _ in range(self.num_rolls):
             self.total += self._roll()
         self.total += self.mod
-
-        self._calc_avg_total()
 
         return self.total
 
@@ -55,16 +38,18 @@ class Dice:
                 self.sides = int(temp[1][0:i])
                 self.mod = int(temp[1][i:])
                 break
-
-        self._calc_avg_total()
-        self._calc_min_max()
     
+    @property
     def avg(self):
         """Returns the average total amount for the current dice settings"""
-        return self.__avg_total
+        sum_sides = sum([x for x in range(1, self.sides + 1)])
+        return (sum_sides / self.sides) * self.num_rolls + self.mod
 
+    @property
     def min_max(self):
-        return self.__lowest, self.__highest
+        lowest = self.num_rolls + self.mod
+        highest = self.sides * self.num_rolls + self.mod
+        return lowest, highest
 
     def __repr__(self):
         return f"Dice(Num Rolls: {self.num_rolls}, Sides: {self.sides}, Mod: {self.mod})"
@@ -81,5 +66,5 @@ if __name__ == "__main__":
 
     print(d)
     print(d.roll_all())
-    print(d.avg())
-    print(d.min_max())
+    print(d.avg)
+    print(d.min_max)
