@@ -56,6 +56,7 @@ class Dice:
 
 
 def do_dice(self, args):
+    """Rolls dice in DnD notation. Example: '2d6+3' rolls two six-sided dice and adds 3 to the total."""
     pass
 
 def help_dice(self):

@@ -2,7 +2,7 @@ from heapq import heappop, heappush
 from operator import sub
 import random
 
-def node(pos: tuple[int, int], g: int, h: int, parent: dict = None) -> dict:
+def node(pos: tuple[int, int], g: int, h: int, parent: dict | None = None) -> dict:
     return {
         "g": g,
         "h": h,
@@ -41,7 +41,7 @@ def get_neighbors_pos(current, grid) -> list:
     ]
 
 def astar(start: tuple[int, int], goal: tuple[int, int], grid):
-    open_list: list[dict] = []
+    open_list: list[tuple] = []
     open_dict = {}
     closed_list = set()
 
