@@ -73,6 +73,9 @@ class Dice:
 def do_dice(self, args):
     pass
 
+def help_dice(self):
+    print(do_dice.__doc__)
+
 if __name__ == "__main__":
     d = Dice()
 

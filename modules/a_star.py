@@ -165,6 +165,11 @@ def print_path_as_arrows(start, path):
     print(path_as_arrows, end="\n\n")
 
 def do_grid(self, args):
+    """
+    Generates a maze and solves it (if possible)
+
+    Usage: grid 
+    """
     grid, start, goal = generate_grid(width=20, height=10, obstacle_chance=0.2)
     
     print_grid(grid, start, goal)
@@ -177,3 +182,6 @@ def do_grid(self, args):
         print_path_as_arrows(start, path)
     else:
         print("No path found")
+
+def help_grid(self):
+    print(do_grid.__doc__)
