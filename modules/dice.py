@@ -8,8 +8,10 @@ class Dice:
         self.sides = sides
         self.mod = mod
 
-        if die_string is not None:
+        if die_string is not None and die_string != "":
             self.parse_notation(die_string)
+        
+        print(self)
     
     def _roll(self):
         return randint(1, self.sides)
@@ -18,6 +20,7 @@ class Dice:
         """Does not count towards the dice total, but uses the dices settings"""
         return self._roll() + self.mod
 
+    @property
     def roll_all(self):
         """Rolls all deice and saves in total. Re-rolling will overwrite the total. Same for avg_total"""
         for _ in range(self.num_rolls):
@@ -33,6 +36,10 @@ class Dice:
         
         self.num_rolls = int(temp[0])
 
+        if "+" not in temp[1] and "-" not in temp[1]:
+            self.sides = int(temp[1])
+            return
+        
         for i, s in enumerate(temp[1]):
             if not s.isdigit():
                 self.sides = int(temp[1][0:i])
@@ -56,7 +63,13 @@ class Dice:
 
 
 def do_dice(self, args):
-    """Rolls dice in DnD notation. Example: '2d6+3' rolls two six-sided dice and adds 3 to the total."""
+    """
+    Rolls dice in DnD notation. Example: '2d6+3' rolls two six-sided dice and adds 3 to the total.
+    Usage: 
+        dice [DnD notation]
+        dice  (Will default to 1d6 + 0)
+    """
+    print(Dice(die_string=args).roll_all)
     pass
 
 def help_dice(self):

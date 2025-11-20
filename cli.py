@@ -38,6 +38,7 @@ def load_modules(cli, modules):
         setattr(cli, "_loaded_module_names", set())
 
     for _, module_name, _ in pkgutil.iter_modules(modules.__path__):
+        loaded = False
         print(module_name, end="...")
         fullname = f'{modules.__name__}.{module_name}'
         try:
@@ -52,10 +53,14 @@ def load_modules(cli, modules):
                     func = getattr(module, attr)
                     if callable(func):
                         setattr(cli, attr, func)
+                        loaded = True
 
             # remember we loaded this module
             getattr(cli, "_loaded_module_names").add(module_name)
-            print("OK")
+            if loaded:
+                print("OK")
+            else:
+                print("Nothing to load")
         except Exception as e:
             # print the error and the traceback so we can debug loading issues
             print(f"Failed to load {fullname}: {e}")
