@@ -7,7 +7,8 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "python.defaultInterpreterPath": "/home/vscode/.pyenv/versions/3.13.0/bin/python"
+        "python.defaultInterpreterPath": "/home/vscode/.pyenv/versions/3.13.1/bin/python"
+
       }
     }
   }
