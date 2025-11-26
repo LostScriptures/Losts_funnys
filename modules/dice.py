@@ -10,9 +10,7 @@ class Dice:
 
         if die_string is not None and die_string != "":
             self.parse_notation(die_string)
-        
-        print(self)
-    
+            
     def _roll(self):
         return randint(1, self.sides)
    

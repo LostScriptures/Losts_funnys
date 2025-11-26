@@ -1,12 +1,17 @@
-from http.cookiejar import MozillaCookieJar, Cookie
 from requests.cookies import RequestsCookieJar, create_cookie
+from http.cookiejar import MozillaCookieJar, Cookie
 from typing import Any
+import websockets
 import requests
 import argparse
+import sqlite3
+import asyncio
 import base64
 import atexit
+import json
 import re
 
+#region Argparse
 parser = argparse.ArgumentParser(
     prog="vrc",
     usage="%(prog)s [options] <command> [args]",
@@ -34,10 +39,13 @@ subparsers = parser.add_subparsers(
 # HELP
 help = subparsers.add_parser("help", help="Show this help message", exit_on_error=False)
 
+# LIVE UPDATE
+update = subparsers.add_parser("update", help="Shows a live update of friends", exit_on_error=False)
+
 # LOGIN
 log_in = subparsers.add_parser("login", help="Authenticate with the VRChat API", exit_on_error=False)
-log_in.add_argument("username", help="VRChat username")
-log_in.add_argument("password", help="VRChat password")
+log_in.add_argument("-u", "--username", help="VRChat username")
+log_in.add_argument("-p", "--password", help="VRChat password")
 
 # GET USER INFO
 user = subparsers.add_parser("user", help="Fetch user info", exit_on_error=False)
@@ -73,6 +81,7 @@ parser.set_defaults(
     resource_id=None,
     output=None,
 )
+#endregion
 
 def at_exit(mozilla: MozillaCookieJar, session: requests.Session):
     """Saves cookies on exit"""
@@ -134,6 +143,7 @@ def make_persistent_session(cookie_file="cookies.txt"):
     atexit.register(lambda: at_exit(mozilla, session))
     return session
 
+#region api setup
 API = "https://api.vrchat.cloud/api/1"
 
 session = make_persistent_session()
@@ -141,7 +151,9 @@ session = make_persistent_session()
 session.headers.update({
     "User-Agent": "Losts_funnys/1.0 (LostPlayer; contact: lost.player.game@gmail.com)"
 })
+#endregion
 
+#region vrc auth
 def basic_auth_header(username: str, password: str) -> dict[str, str]:
     """Generates basic auth token"""
     token = f"{username}:{password}".encode()
@@ -202,11 +214,6 @@ def send_2fa_code(code: str, method: str ="totp"):
     print("2FA successful.")
     return r.json()
 
-def get_current_user() -> Any:
-    """ Uses active session cookie to fetch authenticated user """
-    r = session.get(f"{API}/auth/user")
-    return r.json()
-
 def is_session_valid() -> bool:
     """Checks it the current requests session is still valid"""
     r = session.get(f"{API}/auth/user")
@@ -231,6 +238,12 @@ def login(username: str | None = None, password: str | None = None) -> None:
 
         code = input(f"Enter your {chosen} 6-digit code: ")
         send_2fa_code(code, chosen)
+#endregion
+
+def get_current_user() -> Any:
+    """ Uses active session cookie to fetch authenticated user """
+    r = session.get(f"{API}/auth/user")
+    return r.json()
 
 def get_friends() -> Any:
     """Returns the list of friends"""
@@ -273,10 +286,41 @@ def get_user_by_id(user_id: str) -> Any:
     if r.status_code == 200:
         return r.json()
 
+async def handle_event(msg: str):
+    try:
+        data = json.loads(msg)
+
+    except Exception as e:
+        print("Fiald to parse:", e, msg)
+        return
+
+    typ = data.get("type")
+    content = data.get("content")
+
+    if isinstance(content, str):
+        try:
+            content = json.loads(content)
+        
+        except json.JSONDecodeError:
+            pass
+    
+    if typ == "friend-location":
+        print(content.get("user", {}).get("displayName"), get_world_by_id(get_user_by_id(content.get("userId"))["worldId"]))
+
+async def live_friend_update(token: str):
+    async with websockets.connect(f"wss://pipeline.vrchat.cloud?authToken={token}", user_agent_header = "Losts_funnys/1.0 (LostPlayer; contact: lost.player.game@gmail.com)") as ws:
+        print("Connected")
+        async for msg in ws:
+            await handle_event(msg)
+
+
 # ---------------------------------------------
 #  USAGE
 # ---------------------------------------------
+
 def main(args: str) -> None:
+    db = sqlite3.connect("vrcdb.db")
+    db.execute("CREATE TABLE test (pid INT PRIMARY KEY, a INT)")
     try:
         parsed_args = parser.parse_args(args.split())
     except argparse.ArgumentError as e:
@@ -322,6 +366,12 @@ def main(args: str) -> None:
         print(
             f"Requested download: type={parsed_args.resource_type}, id={parsed_args.resource_id}, output={parsed_args.output}"
         )
+
+    elif cmd == "update":
+        try:
+            asyncio.run(live_friend_update(session.cookies.get("auth", None)))
+        except KeyboardInterrupt:
+            pass
 
     if cmd == "help" or cmd is None:
         parser.print_help()
