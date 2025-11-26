@@ -1,0 +1,14 @@
+{
+  "name": "Python Codespace with Python 3.13 via pyenv",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+
+  "postCreateCommand": "bash .devcontainer/setup-python13.sh",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/.pyenv/versions/3.13.0/bin/python"
+      }
+    }
+  }
+}

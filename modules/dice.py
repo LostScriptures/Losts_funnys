@@ -70,7 +70,6 @@ def do_dice(self, args):
         dice  (Will default to 1d6 + 0)
     """
     print(Dice(die_string=args).roll_all)
-    pass
 
 def help_dice(self):
     print(do_dice.__doc__)

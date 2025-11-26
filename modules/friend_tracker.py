@@ -1,9 +1,55 @@
 from http.cookiejar import MozillaCookieJar
 from typing import Any
 import requests
+import argparse
 import base64
 import atexit
 import re
+
+parser = argparse.ArgumentParser(
+    prog="vrc",
+    usage="%(progs)s <command> [args]",
+    description="Command-line tool for interacting with the VRChat API.",
+    exit_on_error=False,
+)
+
+# Global options (apply to all commands)
+parser.add_argument(
+    "-v", "--verbose",
+    action="store_true",
+    help="Enable verbose output"
+)
+
+# -------------------------
+# SUBCOMMANDS
+# -------------------------
+subparsers = parser.add_subparsers(required=True)
+
+# LOGIN
+log_in = subparsers.add_parser("login", help="Authenticate with the VRChat API")
+log_in.add_argument("username", help="VRChat username")
+log_in.add_argument("password", help="VRChat password")
+
+# GET USER INFO
+user = subparsers.add_parser("user", help="Fetch user info")
+user.add_argument("user_id", help="VRChat user ID")
+
+# LIST FRIENDS
+friends = subparsers.add_parser("friends", help="List your friends")
+friends.add_argument(
+    "--online", action="store_true",
+    help="Show only online friends"
+)
+
+# WORLD INFO
+world = subparsers.add_parser("world", help="Fetch world info")
+world.add_argument("world_id", help="VRChat world ID")
+
+# DOWNLOAD AVATAR / WORLD IMAGE (example)
+download = subparsers.add_parser("download", help="Download VRChat resources")
+download.add_argument("resource_type", choices=["avatar", "world"])
+download.add_argument("resource_id", help="ID of the resource to download")
+download.add_argument("--output", "-o", help="Output filename/path")
 
 def make_persistent_session(cookie_file="cookies.txt"):
     session = requests.Session()
@@ -68,7 +114,6 @@ def login_step1(username: str, password: str) -> Any:
 
     raise Exception("Login failed:", data)
 
-
 def send_2fa_code(code: str, method: str ="totp"):
     """
     method can be: "emailotp" or "totp"
@@ -89,12 +134,10 @@ def send_2fa_code(code: str, method: str ="totp"):
     print("2FA successful.")
     return r.json()
 
-
 def get_current_user() -> Any:
     """ Uses active session cookie to fetch authenticated user """
     r = session.get(f"{API}/auth/user")
     return r.json()
-
 
 def is_session_valid() -> bool:
     """Checks it the current requests session is still valid"""
@@ -146,6 +189,8 @@ def get_world_by_id(id: str) -> Any:
 #  USAGE
 # ---------------------------------------------
 def main(args: str) -> None:
+    args = parser.parse_args(args)
+    
     if not is_session_valid():
         login()
     else:
@@ -160,16 +205,14 @@ def main(args: str) -> None:
     for friend in friends:
         print(f"{friend[0]} ({friend[1]})")
 
-def do_vrctrack(self, args):
+def do_vrc(self, args):
     """
-    Prints a list of currently online friends also allows for searching
-    Usage: vrctrack             (prints all online friends)
-           vrctrack user [username]  (says if users with that name (or similar) are online)
+    A tool to interact with the VRChat API
     """
     main(args)
 
-def help_vrctrack(self):
-    print(do_vrctrack.__doc__)
+def help_vrc(self):
+    parser.print_help()
 
 
 if __name__ == "__main__":

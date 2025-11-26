@@ -4,6 +4,7 @@ import pkgutil
 import sys
 import traceback
 import modules
+
 class losts_funnys(cmd.Cmd):
     intro = 'Losts funnys CLI. Type ? or help <topic> for help\n'
     prompt = '> '
