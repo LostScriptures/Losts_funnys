@@ -354,7 +354,7 @@ async def live_friend_update(token: str | None):
 def main(args: str) -> None:
     db = sqlite3.connect("vrcdb.db")
     try:
-        parsed_args = parser.parse_args(args.split())
+        parsed_args: argparse.Namespace = parser.parse_args(args.split())
     except argparse.ArgumentError as e:
         print(e.message)
         return
