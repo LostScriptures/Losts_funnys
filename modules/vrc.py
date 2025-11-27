@@ -286,12 +286,21 @@ def get_user_by_id(user_id: str) -> Any:
     if r.status_code == 200:
         return r.json()
 
-async def handle_event(msg: str):
+async def handle_event(msg: websockets.Data) -> None:
+    # Defensive parsing: messages may be strings or already decoded dicts.
     try:
-        data = json.loads(msg)
+        data: dict | None = json.loads(msg)
+    except Exception:
+        # If parsing fails, try to accept `msg` as already-deserialized data.
+        if isinstance(msg, dict):
+            data = msg
+        else:
+            print("Failed to parse websocket message:", msg)
+            return
 
-    except Exception as e:
-        print("Fiald to parse:", e, msg)
+    # data should be a dict here — otherwise bail out early
+    if not isinstance(data, dict):
+        print("Unexpected message format (not a dict):", data)
         return
 
     typ = data.get("type")
@@ -300,15 +309,39 @@ async def handle_event(msg: str):
     if isinstance(content, str):
         try:
             content = json.loads(content)
-        
         except json.JSONDecodeError:
-            pass
-    
-    if typ == "friend-location":
-        print(content.get("user", {}).get("displayName"), get_world_by_id(get_user_by_id(content.get("userId"))["worldId"]))
+            # keep content as-is (not a dict)
+            content = None
 
-async def live_friend_update(token: str):
-    async with websockets.connect(f"wss://pipeline.vrchat.cloud?authToken={token}", user_agent_header = "Losts_funnys/1.0 (LostPlayer; contact: lost.player.game@gmail.com)") as ws:
+    # Only handle friend-location when content is a dict and has expected fields
+    if typ == "friend-location" and isinstance(content, dict):
+        # Get display name safely
+        display_name = None
+        user_obj = content.get("user")
+        if isinstance(user_obj, dict):
+            display_name = user_obj.get("displayName")
+
+        # Get userId -> fetch user -> then worldId -> fetch world name
+        user_id = content.get("userId")
+        world_name = None
+        if isinstance(user_id, str):
+            user_info = get_user_by_id(user_id)
+            if isinstance(user_info, dict):
+                world_id = user_info.get("worldId")
+                if isinstance(world_id, str):
+                    world_name = get_world_by_id(world_id)
+
+        print(display_name, world_name)
+
+async def live_friend_update(token: str | None):
+    if not token:
+        print("Missing auth token for live updates. Aborting live_friend_update().")
+        return
+
+    async with websockets.connect(
+        f"wss://pipeline.vrchat.cloud?authToken={token}",
+        user_agent_header="Losts_funnys/1.0 (LostPlayer; contact: lost.player.game@gmail.com)",
+    ) as ws:
         print("Connected")
         async for msg in ws:
             await handle_event(msg)
@@ -320,7 +353,6 @@ async def live_friend_update(token: str):
 
 def main(args: str) -> None:
     db = sqlite3.connect("vrcdb.db")
-    db.execute("CREATE TABLE test (pid INT PRIMARY KEY, a INT)")
     try:
         parsed_args = parser.parse_args(args.split())
     except argparse.ArgumentError as e:
