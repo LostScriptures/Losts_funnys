@@ -12,3 +12,16 @@ def connect_to_db(db_name: str) -> sqlite3.Connection:
     db_path = Path(__file__).parent.parent / db_name
     connection = sqlite3.connect(db_path)
     return connection
+
+def close_db_connection(connection: sqlite3.Connection) -> None:
+    """Close the given database connection"""
+    if connection:
+        connection.close()
+
+def execute_query(connection: sqlite3.Connection, query: str) -> list[tuple]:
+    """Execute a SQL query and return the results"""
+    cursor = connection.cursor()
+    cursor.execute(query)
+    results = cursor.fetchall()
+    return results
+
