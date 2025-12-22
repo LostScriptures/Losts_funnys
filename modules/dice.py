@@ -76,6 +76,6 @@ if __name__ == "__main__":
     d = Dice()
 
     print(d)
-    print(d.roll_all())
+    print(d.roll_all)
     print(d.avg)
     print(d.min_max)
