@@ -30,8 +30,9 @@ def get_neighbors_pos(current, grid) -> list:
     cols = len(grid[0])
 
     possible_moves = [
-        (x + 1, y), (x - 1, y),
-        (x, y + 1), (x, y - 1)
+        (x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
+        (x - 1, y),                 (x + 1, y),
+        (x - 1, y + 1), (x, y + 1), (x + 1, y + 1)
     ]
 
     return [
@@ -144,10 +145,14 @@ def print_grid(grid, start, goal, path = None):
 
 def print_path_as_arrows(start, path):
     arrows = {
-        (0, 1): "⇩",
-        (0, -1): "⇧",
         (1, 0): "⇨",
-        (-1, 0): "⇦"
+        (1, 1): "⇘",
+        (0, 1): "⇩",
+        (-1, 1): "⇙",
+        (-1, 0): "⇦",
+        (-1, -1): "⇖",
+        (0, -1): "⇧",
+        (1, -1): "⇗"
     }
     path.pop(0)
 
