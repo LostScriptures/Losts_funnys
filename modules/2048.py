@@ -1,6 +1,7 @@
 from random import randint, choice
 from enum import IntEnum
-from typing import overload, List, Union
+from typing import List, Union, overload
+from time import sleep
 
 class Dir(IntEnum):
     UP = 1
@@ -9,6 +10,8 @@ class Dir(IntEnum):
     RIGHT = 4
 
 class Board(list):
+    invalid_move = False
+
     @overload
     def __init__(self, initial_board: List[List[int]]) -> None: ...
     @overload
@@ -25,11 +28,9 @@ class Board(list):
                 rows, cols = args[0], args[1]
                 default_value = args[2] if len(args) == 3 else None
                 self.extend([[default_value for _ in range(cols)] for _ in range(rows)])
-            else:
-                raise ValueError("Invalid arguments. Use Board(initial_board) or Board(rows, cols, default_value).")
-
-    def turn(self, direction: str = "right"):
-        """Turns the board in the spezified direction"""
+    
+    def rotate(self, direction: str = "right"):
+        """Rotates the board in the specified direction"""
         N = len(self)
 
         if direction == "right":
@@ -49,47 +50,55 @@ class Board(list):
         super().reverse()
         return self
     
-    def apply_gamelogic(self):
+    def merge_tiles(self):
         for x in range(len(self[0])):
             column = [self[y][x] for y in range(len(self))]
+            cleaned = [num for num in column if num != 0]
+            cleaned.extend([0] * (len(column) - len(cleaned)))
             new_column = []
             i = 0
-            while i < len(column):
-                if i + 1 < len(column) and column[i] == column[i + 1] and column[i] != 0:
-                    new_column.append(column[i] * 2)
+            while i < len(cleaned):
+                if i + 1 < len(cleaned) and cleaned[i] == cleaned[i + 1] and cleaned[i] != 0:
+                    new_column.append(cleaned[i] * 2)
                     i += 2
                 else:
-                    if column[i] != 0:
-                        new_column.append(column[i])
+                    if cleaned[i] != 0:
+                        new_column.append(cleaned[i])
                     i += 1
-            while len(new_column) < len(column):
+            while len(new_column) < len(cleaned):
                 new_column.append(0)
             for y in range(len(self)):
                 self[y][x] = new_column[y]
         return self
     
 class Game:
+    choices = [2, 4]
+
     def __init__(self) -> None:
-        self.choices = [2, 4]
         self.reset()
         self.random_tile()
         self.random_tile()
     
     def move(self, dir: Dir):
         """Make a permanent move to the board"""
+        save = self.board.copy()
+
         if dir == Dir.DOWN:
-            self.board.reverse().apply_gamelogic().reverse()
+            self.board.reverse().merge_tiles().reverse()
             return
 
         elif dir == Dir.LEFT:
-            self.board.turn().apply_gamelogic().turn("left")
+            self.board.rotate().merge_tiles().rotate("left")
             return
         
         elif dir == Dir.RIGHT:
-            self.board.turn().reverse().apply_gamelogic().reverse().turn("left")
+            self.board.rotate().reverse().merge_tiles().reverse().rotate("left")
             return
             
-        self.board.apply_gamelogic()
+        self.board.merge_tiles()
+        
+        if self.board == save: # The move did nothing
+            self.board.invalid_move = True
     
     def simulate_move(self, dir: str):
         # Copys the current board and makes the move allowing to check for invalid moves
@@ -108,7 +117,7 @@ class Game:
             temp.board = Board(self.board)
             temp.move(dir)
 
-            if self.board != temp.board:
+            if not temp.board.invalid_move:
                 moves.append(True)
 
         if any(moves):
@@ -119,7 +128,7 @@ class Game:
     def to_string(self):
         s = ""
         for row in self.board:
-            s += f" --- --- --- ---\n| {row[0]} | {row[1]} | {row[2]} | {row[2]} |\n"
+            s += f" --- --- --- ---\n| {row[0]} | {row[1]} | {row[2]} | {row[3]} |\n"
         s += " --- --- --- ---\n"
         return s
 
@@ -133,8 +142,9 @@ class Game:
                 if self.board[y][x] == 0:
                     empty.append((y, x))
         
-        pos = choice(empty)
-        self.board[pos[0]][pos[1]] = choice(self.choices)
+        if empty:
+            pos = choice(empty)
+            self.board[pos[0]][pos[1]] = choice(self.choices)
 
     def tick(self, dir: str):
         match dir:
@@ -146,8 +156,6 @@ class Game:
                 self.move(Dir.LEFT)
             case "right":
                 self.move(Dir.RIGHT)
-
-        self.random_tile()
 
 def do_2048():
     ...
@@ -171,6 +179,14 @@ if __name__ == "__main__":
                 g.tick("left")
             case "r":
                 g.tick("right")
-            
+        
+        if g.board.invalid_move:
+            print("Invalid Move")
+            sleep(0.75)
+            continue
+
+        g.random_tile()
+
         if g.check_loss():
             print("You lost")
+            break
