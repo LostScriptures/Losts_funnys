@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
 
@@ -25,3 +26,10 @@ def execute_query(connection: sqlite3.Connection, query: str) -> list[tuple]:
     results = cursor.fetchall()
     return results
 
+@contextmanager
+def get_db_connection(db_name: str):
+    connection = connect_to_db(db_name)
+    try:
+        yield connection
+    finally:
+        close_db_connection(connection)

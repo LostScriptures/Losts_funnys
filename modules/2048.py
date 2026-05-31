@@ -157,11 +157,11 @@ class Game:
             case "right":
                 self.move(Dir.RIGHT)
 
-def do_2048():
-    ...
+def do_2048(self):
+    return
 
-def help_2048():
-    ...
+def help_2048(self):
+    print("Not implemented yet")
 
 if __name__ == "__main__":
     g = Game()
