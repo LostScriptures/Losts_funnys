@@ -23,11 +23,25 @@ class Counter(Tk):
         self.counter_label.grid(column=0, row=1, sticky="nsew")
 
         Label(frame, text=("The " + word + " Counter"), font=self.font).grid(column=0, row=0, sticky="nsew")
-        Button(frame, text=("+1 " + word), command = self.increment, font=self.font).grid(column=0, row=2, sticky="nsew")
+        
+        # Button frame
+        bframe = Frame(frame)
+        bframe.grid(column=0, row=2, sticky="nsew")
+        
+        bframe.columnconfigure([0, 1], weight=1)
+        bframe.rowconfigure(0, weight=1)
+        
+        Button(bframe, text=("+1 " + word), command = self.increment, font=self.font).grid(column=0, row=0, sticky="nsew")
+        Button(bframe, text=("-1 " + word), command = self.decrement, font=self.font).grid(column=1, row=0, sticky="nsew")
 
     def increment(self):
         """Increment the counter by 1."""
         self.count += 1
+        self.counter_label.config(text=str(self.count))
+
+    def decrement(self):
+        """Decrement the counter by 1."""
+        self.count -= 1
         self.counter_label.config(text=str(self.count))
 
 
@@ -35,4 +49,13 @@ def do_counter(self, args):
     """Open a simple counter GUI. Usage: counter [word]"""
     app = Counter(word=args if args else "Anything")
     
+    app.mainloop()
+
+def help_counter(self):
+    print(do_counter.__doc__)
+
+
+if __name__ == "__main__":
+    app = Counter("Test")
+
     app.mainloop()
