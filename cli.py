@@ -17,7 +17,6 @@ class losts_funnys(cmd.Cmd):
 
     _module_map = {}
 
-    # Command to exit the CLI
     def do_exit(self, _args):
         """Exit the CLI."""
         _ = _args

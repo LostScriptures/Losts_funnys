@@ -20,16 +20,12 @@ parser = argparse.ArgumentParser(
     add_help=False
 )
 
-# Global options (apply to all commands)
 parser.add_argument(
     "-v", "--verbose",
     action="store_true",
     help="Enable verbose output"
 )
 
-# -------------------------
-# SUBCOMMANDS
-# -------------------------
 subparsers = parser.add_subparsers(
     title="Available commands",
     help="Use '%(prog)s <command> --help' for more information on a command.",
@@ -310,7 +306,6 @@ async def handle_event(msg: websockets.Data) -> None:
         try:
             content = json.loads(content)
         except json.JSONDecodeError:
-            # keep content as-is (not a dict)
             content = None
 
     # Only handle friend-location when content is a dict and has expected fields
@@ -345,11 +340,6 @@ async def live_friend_update(token: str | None):
         print("Connected")
         async for msg in ws:
             await handle_event(msg)
-
-
-# ---------------------------------------------
-#  USAGE
-# ---------------------------------------------
 
 def main(args: str) -> None:
     db = sqlite3.connect("vrcdb.db")
@@ -387,7 +377,7 @@ def main(args: str) -> None:
 
     elif cmd == "login":
         # login() already performed above if necessary — just confirm
-        print("Login flow complete")
+        print("Login complete")
 
     elif cmd == "world":
         name = get_world_by_id(parsed_args.world_id)
